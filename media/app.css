@@ -180,7 +180,7 @@ body {
 
 .message pre {
     position: relative;
-    white-space: pre-wrap;
+    /* white-space: pre-wrap; */
     /* word-wrap: break-word; */
     background-color: var(--vscode-actionBar-toggledBackground);
     padding: 25px 10px 10px 10px;
