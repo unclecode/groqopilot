@@ -1,0 +1,142 @@
+{
+    "name": "groqopilot",
+    "displayName": "Groqopilot",
+    "description": "Copilot, set free by knights known as Groq.",
+    "icon": "assets/groq-icon-white.png",
+    "galleryBanner": {
+        "color": "#F55036",
+        "theme": "dark"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/unclecode/groqopilot.git"
+    },
+    "publisher": "unclecode",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.87.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "groqopilot-sidebar",
+                    "title": "Groqopilot",
+                    "icon": "media/groq_new.svg"
+                }
+            ]
+        },
+        "views": {
+            "groqopilot-sidebar": [
+                {
+                    "id": "groqopilotView",
+                    "name": "Groqopilot",
+                    "type": "webview"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "groqopilot.openPanel",
+                "title": "Open Groqopilot in New Editor",
+                "category": "Groqopilot"
+            },
+            {
+                "command": "groqopilot.newSession",
+                "title": "New Session",
+                "icon": "media/plus.svg",
+                "shortTitle": "New Session",
+                "category": "Groqopilot"
+            },
+            {
+                "command": "groqopilot.showHistory",
+                "title": "Show History",
+                "icon": "media/history.svg",
+                "shortTitle": "Show History",
+                "category": "Groqopilot"
+            },
+            {
+                "command": "groqopilot.showSettings",
+                "title": "Show Settings",
+                "icon": "media/settings.svg",
+                "shortTitle": "Show Setting",
+                "category": "Groqopilot"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "groqopilot.newSession",
+                    "when": "view == groqopilotView",
+                    "group": "navigation"
+                },
+                {
+                    "command": "groqopilot.showHistory",
+                    "when": "view == groqopilotView",
+                    "group": "navigation"
+                },
+                {
+                    "command": "groqopilot.showSettings",
+                    "when": "view == groqopilotView",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "groqopilot.openPanel",
+                    "when": "view == groqopilotView",
+                    "group": "inline"
+                }
+            ]
+        },
+        "configuration": {
+            "title": "Groqopilot",
+            "properties": {
+                "groqopilot.apiKey": {
+                    "type": "string",
+                    "default": "123",
+                    "description": "API key for the Groqopilot backend service"
+                },
+                "groqopilot.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable or disable Groqopilot"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile && npm run lint",
+        "lint": "eslint src --ext ts",
+        "test": "vscode-test"
+    },
+    "devDependencies": {
+        "@types/mocha": "^10.0.6",
+        "@types/node": "18.x",
+        "@types/vscode": "^1.87.0",
+        "@typescript-eslint/eslint-plugin": "^7.0.2",
+        "@typescript-eslint/parser": "^7.0.2",
+        "@vscode/test-cli": "^0.0.6",
+        "@vscode/test-electron": "^2.3.9",
+        "eslint": "^8.56.0",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "coffee-script": "^1.12.7",
+        "emitter": "^0.0.5",
+        "groq-sdk": "^0.3.2",
+        "marked": "^12.0.1",
+        "node-record-lpcm16": "^1.0.1",
+        "openai": "^4.29.0",
+        "recorder": "^0.0.1",
+        "streamifier": "^0.1.1"
+    }
+}

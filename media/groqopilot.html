@@ -1,0 +1,74 @@
+<div class="groqopilot-container">
+    <div id="topAlert" class="alert">
+        <div class="content"></div>
+        <div class="close">
+            <img src="{{media_url}}/cross.svg" width="32" alt="Close" />
+        </div>
+    </div>
+    <div class="groqopilot-header">
+        <div class="settings-section">
+            <img src="{{media_url}}/groq_q.svg" width="64" alt="Settings" />
+
+            <p style="font-size: 18px">
+                <strong>Hello!</strong> I am your coding copilot, powered by Groq! Call me Qpilot!
+            </p>
+        </div>
+    </div>
+    <div class="groqopilot-content">
+        <div id="message-list" class="message-list intern ontern-400">
+            <!-- Messages will be dynamically added here -->
+        </div>
+        <div id="session-history" class="session-history" style="display: none">
+            <!-- Session history will be dynamically added here -->
+        </div>
+        <div id="settings" class="settings-view" style="display: none">
+            <!-- Settings will be dynamically added here -->
+        </div>
+    </div>
+    <div class="groqopilot-footer">
+        <div class="examples">
+            <div class="example">
+                <a href="#" data-example="Hello Groq, generate the code for bubble sort code in python.">
+                    Generate Code
+                </a>
+            </div>
+            <div class="example">
+                <a
+                    href="#"
+                    data-example="Hello Groq, finally you are here with me in this VScode, ready to build next awesome killer app?"
+                >
+                    Greeting
+                </a>
+            </div>
+        </div>
+        <div class="message-input-wrapper">
+            <div class="message-input-section">
+                <textarea
+                    id="message-input"
+                    class="input-box inter inter-400"
+                    placeholder="Type your message..."
+                ></textarea>
+                <div style="display: none">
+                    <button id="microphone-btn" class="microphone-button">
+                        <img src="{{media_url}}/microphone.svg" width="24" alt="Microphone" />
+                        <img
+                            src="{{media_url}}/record-stop.svg"
+                            class="recording"
+                            style="display: none"
+                            width="24"
+                            alt="Recording"
+                        />
+                        <img
+                            src="{{media_url}}/processing.svg"
+                            class="loading"
+                            style="display: none"
+                            width="24"
+                            alt="Loading"
+                        />
+                    </button>
+                </div>
+                <button id="send-message-btn" class="button">Send</button>
+            </div>
+        </div>
+    </div>
+</div>

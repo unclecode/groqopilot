@@ -1,0 +1,50 @@
+name: Publish Extension
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        token: ${{ secrets.REPO_ACCESS_TOKEN }}
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Bump version
+      if: "!contains(github.event.head_commit.message, '[skip ci]')"
+      run: |
+        current_version=$(jq -r '.version' package.json)
+        IFS='.' read -r major minor patch <<< "$current_version"
+        new_version="$major.$minor.$((patch + 1))"
+        jq --arg version "$new_version" '.version = $version' package.json > package.json.tmp
+        mv package.json.tmp package.json
+
+    - name: Commit and push version bump
+      if: "!contains(github.event.head_commit.message, '[skip ci]')"
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "GitHub Actions"
+        git add package.json
+        git commit -m "Bump version to $(jq -r '.version' package.json) [skip ci]"
+        git push
+
+    - name: Publish to Visual Studio Marketplace
+      if: "!contains(github.event.head_commit.message, '[skip ci]')"
+      env:
+        VSCE_PAT: ${{ secrets.VS_MARKETPLACE_TOKEN }}
+      run: |
+        npm install -g vsce
+        vsce publish -p $VSCE_PAT

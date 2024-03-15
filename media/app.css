@@ -1,0 +1,456 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: "Inter", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    font-variation-settings: "slnt" 0;
+    font-weight: 400;
+}
+.groqopilot-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+.groqopilot-header {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    border-bottom: 1px solid var(--vscode-actionBar-toggledBackground);
+}
+.groqopilot-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    overflow-y: auto;
+}
+
+.groqopilot-footer {
+    display: flex;
+    flex-direction: column;
+}
+
+.title {
+    flex-grow: 1;
+    margin: 0;
+}
+.settings-section {
+    margin-right: 10px;
+    display: flex;
+    width: 100%;
+    align-items: center;
+}
+#api-key-input {
+    flex-grow: 1;
+}
+
+.message-list {
+    flex-grow: 1;
+    overflow-y: auto;
+    /* border: 1px solid var(--vscode-actionBar-toggledBackground); */
+    flex-direction: column;
+}
+
+.message {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    padding: 15px 10px;
+    font-size: 13px;
+    line-height: 2;
+    word-wrap: break-word;
+    border-bottom: 1px solid var(--vscode-button-border);
+    /* width: 100%; */
+    transition: background-color 0.3s ;
+    flex-direction: column;
+}
+
+.avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: large;
+    line-height: 0;
+    position: relative;
+    margin-left: 10px;
+    
+}
+
+.message.user .avatar {
+    background-color: #007bff; /* Blue color for user avatar */
+}
+
+.message.assistant .avatar {
+    background-color: #cb4217; /* Purple color for AI assistant avatar */
+    
+}
+
+.message .content {
+    flex: 1;
+    padding: 0px 10px 0px 10px;
+    border-radius: 5px;
+}
+
+.message .message-header {
+    display: flex;
+    font-weight: 600;
+    align-items: center;
+}
+
+.message .content :first-child {
+    margin-top: 0;
+}
+
+.code-actions {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    display: flex;
+}
+
+.copy-code-icon,
+.wrap-code-icon,
+.insert-code-icon {
+    width: 20px;
+    height: 20px;
+    background-repeat: no-repeat;
+    background-size: cover;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s;
+    margin-left: 5px;
+}
+
+.copy-code-icon {
+    background-image: url("copy.svg");
+}
+
+.insert-code-icon {
+    background-image: url("code.svg");
+}
+
+.wrap-code-icon {
+    background-image: url("wrap.svg");
+}
+
+.copy-code-icon:hover,
+.insert-code-icon:hover {
+    opacity: 1;
+}
+
+.message.user {
+    color: var(--vscode-button-foreground);
+}
+
+.message.assistant {
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    /* align-self: flex-start; */
+}
+
+.message.status {
+    background-color: var(--vscode-editor-background);
+    color: var(--vscode-editor-foreground);
+    align-self: center;
+    font-size: 12px;
+}
+
+.message.selected,
+.message.editing {
+    border: 1px solid var(--vscode-button-background);
+    outline: none;
+    background-color: var(--vscode-actionBar-toggledBackground);
+}
+
+.message:hover {
+    cursor: pointer;
+    background-color: var(--vscode-actionBar-toggledBackground);
+}
+
+.message pre {
+    position: relative;
+    white-space: pre-wrap;
+    /* word-wrap: break-word; */
+    background-color: var(--vscode-actionBar-toggledBackground);
+    padding: 25px 10px 10px 10px;
+    border-radius: 5px;
+    overflow-x: auto;
+}
+.message pre.wrap {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+.message pre code {
+    background-color: transparent;
+}
+
+.message-input-wrapper {
+    padding: 0px 10px 20px 10px;
+    display: flex;
+    border-top: 1px solid var(--vscode-actionBar-toggledBackground);    
+}
+
+
+.message-input-section textarea {
+    /* min-height: 60px;  */
+    resize: none;
+    padding: 0;
+    outline: none;
+    border: none;
+    flex: 1;
+}
+.message-input-section textarea:focus {
+    border: none;
+    outline: none;
+}
+.message-input-section {
+    display: flex;
+    padding: 10px;
+    border: 1px solid var(--vscode-input-background);
+    border-radius: 10px;
+    background-color: var(--vscode-input-background);
+    align-items: center;
+    width: 100% ;
+}
+
+.message-input-section.focused {
+    border: 1px solid var(--vscode-input-border);
+}
+
+
+
+/*  Sessions */
+.session-history {
+    display: flex;
+    flex-direction: column;
+    /* padding: 10px; */
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+.session-item {
+    flex-direction: row;
+    position: relative;
+    align-items: start;
+}
+
+.session-item .message-content{
+    padding-right: 20px;
+    flex: 1;
+}
+.message-datetime {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+    /* align-self: flex-end; */
+}
+
+.session-item .delete-icon {
+    cursor: pointer;
+    color: #888;
+    font-size: 14px;
+    margin-left: 10px;
+    /* position: absolute; */
+    right: 10px;
+}
+
+.session-item .delete-icon:hover {
+    color: #fff;
+}
+
+.input-box {
+    padding: 5px;
+    border: 1px solid var(--vscode-input-background);
+    background-color: var(--vscode-input-background);
+    color: var(--vscode-input-foreground);
+    border-radius: 5px;
+    outline: none;
+}
+.input-box:focus {
+    border: 1px solid var(--vscode-input-border);
+    outline: none;
+}
+#message-input {
+    border-radius: 5px;
+}
+.button {
+    padding: 5px 10px;
+    margin-left: 10px;
+    background-color: #cb4217;
+    cursor: pointer;
+    border-radius: 3px;
+    color: #fff;
+    border: none;
+}
+
+.examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px;
+}
+.examples .example {
+    margin-bottom: 5px;
+    cursor: pointer;
+    padding: 5px 11px;
+    background-color: var(--vscode-banner-background);
+    border-radius: 50px;
+}
+.examples .example a {
+    text-decoration: none;
+}
+
+.inter {
+    font-family: "Inter", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    font-variation-settings: "slnt" 0;
+    font-weight: 400;
+}
+
+.inter-100 {
+    font-weight: 100;
+}
+
+.inter-200 {
+    font-weight: 200;
+}
+
+.inter-300 {
+    font-weight: 300;
+}
+
+.inter-400 {
+    font-weight: 400;
+}
+
+.inter-500 {
+    font-weight: 500;
+}
+
+.inter-600 {
+    font-weight: 600;
+}
+
+.inter-700 {
+    font-weight: 700;
+}
+
+.inter-800 {
+    font-weight: 800;
+}
+
+.inter-900 {
+    font-weight: 900;
+}
+
+
+/*  Settings */
+.settings-view {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    
+}
+
+.settings-view .setting-header {
+    display: flex;
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.settings-view .setting-item {
+    display: flex;
+    flex-direction: column;
+    /* border-bottom: 1px solid var(--vscode-actionBar-toggledBackground); */
+    padding: 0 0 20px 0;
+}
+
+.settings-view .setting-item label {
+    margin-bottom: 10px;
+    text-transform: capitalize;
+}
+
+.settings-view  #saveBtn {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: #007bff;
+    cursor: pointer;
+    border-radius: 3px;
+    color: #fff;
+    border: none;
+}
+
+
+/* ALERT */
+#topAlert {
+    margin: 20px;
+    font-size: 18px;
+
+}
+.alert {
+    padding: 20px;
+    background-color: #f44336;
+    color: white;
+    margin-bottom: 15px;
+    display: none;
+    border-radius: 5px;
+    position: relative;
+}
+.alert.info {
+    background-color: #2196F3;
+}
+.alert.success {
+    background-color: #4CAF50;
+}
+.alert.warning {
+    background-color: #ff9800;
+}
+.alert.danger {
+    background-color: #f44336;
+}
+.alert .close {
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+.alert .content{
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+    overflow-x: auto;
+}
+
+/* Mic */
+.microphone-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.microphone-button img {
+    width: 24px;
+    height: 24px;
+    vertical-align: middle;
+}
+
+.microphone-button.recording img {
+    animation: spin 2s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
