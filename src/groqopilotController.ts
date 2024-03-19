@@ -221,7 +221,7 @@ export class GroqopilotController {
         }
     }
 
-    private async callAPI(message: string, current_messages: Message[], model: string = null): Promise<any> {
+    private async callAPI(message: string, current_messages: Message[], model: string = ""): Promise<any> {
         if (!this.client) {
             return 'Client is not initialized';
         }
@@ -242,7 +242,7 @@ export class GroqopilotController {
                 ],
                 temperature: this._settings.temperature.value,
                 top_p: 0.9,
-                model: model || this._settings.model.selected,
+                model: (model !== "") || this._settings.model.selected,
             });
 
             return { status: 'success', data: completion.choices[0].message.content };
