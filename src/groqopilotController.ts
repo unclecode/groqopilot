@@ -46,7 +46,10 @@ export class GroqopilotController {
         }
         // Add "models" and values are "Mixtral8x7b", "Llama70b", "Gemma:7b", for this value type os enum
         if (!this._settings.model) {
-            this._settings.model = { "type": "enum", "value": ["mixtral-8x7b-32768", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
+            this._settings.model = { "type": "enum", "value": ["llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
+        }
+        if (!this._settings.rerank) {
+            this._settings.rerank = { "type": "boolean", "value": false, "description": "Generate multiple responses and re-rank them to get the best response." };
         }
 
         // Add "stream" to settings and default value is false
@@ -124,7 +127,19 @@ export class GroqopilotController {
             message_context = `${context}\n\nUse above context to get the result for the following query (I need concice and right to the point answer, less explanation, unless it requested in the following query):\n\n${message}`;
         }
 
-        const result = await this.callAPI(message_context);
+        // Get all current messages of session.
+        let currentMessages = this._sessions[this._activeSessionId].messages;
+
+
+        // check if in setting "rerank" is set to true, then call the reRank function if not call the callAPI function
+        let result = null;
+        if (this._settings.rerank.value)
+            result = await this.reRank(message_context, currentMessages, 5, 3);
+        else
+            result = await this.callAPI(message_context, currentMessages);
+
+        // // const result = await this.callAPI(message_context, currentMessages);
+        // const result = await this.reRank(message_context, currentMessages, 5, 3);
         if (result.status === 'success') {
             const response = result.data;
             const formatedResponse = await marked.parse(response);
@@ -206,12 +221,7 @@ export class GroqopilotController {
         }
     }
 
-    private async callAPI(message: string): Promise<any> {
-        // Implement the API call to the backend service using the API key
-        // Return the response from the API
-        // make a delat 200ms and return a mock response
-        // await new Promise(resolve => setTimeout(resolve, 1000));
-        // return `Response to: ${message}`;
+    private async callAPI(message: string, current_messages: Message[], model: string = null): Promise<any> {
         if (!this.client) {
             return 'Client is not initialized';
         }
@@ -224,18 +234,99 @@ export class GroqopilotController {
                         role: "system",
                         content: "You are name is Groq, you are an advanced AI coding assistant. You answer and help coding questions come form the user. Some times there is `<context>...</context>` in the user messge, you should use that one to provide the nswer. Alwause be concise and succinct. No need to provide lenghty explanation unless user asks. Do not generate misunfoirmation, if there is somehting you don't know or not sure make sure to share rather than providing wrong information. You are here to help and provide the right information. Another thing is, always when you have to use a framework lik eReact, or FastAPI, make sure to double check the version with users, to avoid confusion. Today date is: " + today
                     },
+                    ...current_messages.map(c => ({ role: c.role, content: c.content })),
                     {
                         role: "user",
                         content: message
                     }
                 ],
-                model: "mixtral-8x7b-32768"
+                temperature: this._settings.temperature.value,
+                top_p: 0.9,
+                model: model || this._settings.model.selected,
             });
 
             return { status: 'success', data: completion.choices[0].message.content };
-        } catch (error : any) {
+        } catch (error: any) {
             if (error && error.message) {
                 console.log(error.message)
+                return { status: 'error', message: error.message };
+            }
+            return { status: 'error', message: error?.toString() };
+        }
+    }
+
+
+    private async reRank(message: string, current_messages: Message[], N: number, top_k: number): Promise<any> {
+        if (!this.client) {
+            return 'Client is not initialized';
+        }
+        try {
+            // Call the callAPI function N times to get multiple responses
+            const promises = [];
+            for (let i = 0; i < Math.floor(N * 1); i++) {
+                promises.push(this.callAPI(message, current_messages));
+            }
+            const results = await Promise.all(promises);
+            console.log(results);
+
+            // Extract the response content from each result
+            const responses = results.map(result => result.data);
+            const uniqueResponses = new Set(responses);
+            const finalResponses = Array.from(uniqueResponses);
+
+            // if top_k is greater than the number of unique responses, set top_k to the 40% number of unique responses size
+            if (top_k > finalResponses.length) {
+                top_k = Math.floor(finalResponses.length * 0.4);
+            }
+
+            // Generate the prompt for the LLM to evaluate and select the best responses
+            const prompt = `You are an AI assistant tasked with evaluating and selecting the best responses to a user's request. The user's request is:
+
+<context>
+${message}
+</context>
+
+Here are ${N} responses generated by different programmers to the user's request:
+
+${finalResponses.map((response, index) => `<response index = ${index + 1}>\n${response}\n</response>`).join('\n\n')}
+
+# Task:
+Your task is to evaluate these responses and select the top ${top_k} that best address the user's request. Consider factors such as relevance, clarity, and completeness when making your selection.
+
+After selecting the top ${top_k} responses, generate a final response by merging and summarizing the selected responses. Format your output as follows:
+
+**Make sure to wrap the the final answer supposed to be back to user using >>>**
+
+# Example of your response:
+After evaluating the responses, I have selected the top <top_k> that best address the user's request. Here they are:
+
+<response index = 1>
+summary of response 1
+
+<response index = 2>
+summary of response 2
+
+...
+
+<response index = top_k>
+summary of response top_k
+
+Based on these top <top_k> responses, I have generated a final response by merging and summarizing them:
+
+>>>
+final_response_for_user
+>>>`;
+
+            // Call the callAPI function with the generated prompt
+            const finalResult = await this.callAPI(prompt, [], "llama2-70b-4096"); //"mixtral-8x7b-32768");
+
+            // Extract the final response from the finalResult
+            const finalResponse = finalResult.data.match(/>>>([\s\S]*?)>>>/)[1].trim();
+
+            return { status: 'success', data: finalResponse };
+        } catch (error: any) {
+            if (error && error.message) {
+                console.log(error.message);
                 return { status: 'error', message: error.message };
             }
             return { status: 'error', message: error?.toString() };

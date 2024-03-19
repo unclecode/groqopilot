@@ -71,15 +71,26 @@ function showSettings(settings) {
 
     for (const key in settings) {
         // TODO: Temporary
-        if ( key == "whisper_api_key" ) 
+        if ( false && key == "whisper_api_key" ) 
             continue;
         
         const settingElement = document.createElement("div");
         settingElement.classList.add("setting-item");
 
         const labelElement = document.createElement("label");
-        labelElement.textContent = key.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase());
+        labelElement.textContent = key.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase()) ;
+        // if settings[key]["description"] exists att another label within small tage with the description
+        let smallElement
+        if (settings[key]["description"]) {
+            smallElement = document.createElement("small");
+            smallElement.classList.add("setting-description");
+            smallElement.textContent = settings[key]["description"];
+        }
+
         settingElement.appendChild(labelElement);
+        if (smallElement) {
+            settingElement.appendChild(smallElement);
+        }
 
         const value = settings[key]["value"];
         const type = settings[key]["type"];

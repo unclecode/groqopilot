@@ -56,7 +56,7 @@ let activeSessionId = null;
     });
 
     // TODO: Fix this later
-    // micBtn.addEventListener("click", handleMicrophoneClick);
+    micBtn.addEventListener("click", handleMicrophoneClick);
 
     window.addEventListener("message", (event) => {
         const message = event.data;

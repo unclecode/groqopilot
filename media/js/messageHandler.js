@@ -84,8 +84,6 @@ function updateMessageList(messages) {
     const sessionHistory = document.getElementById("session-history");
     const settingsElement = document.getElementById("settings");
     const footer = document.querySelector(".groqopilot-footer");
-
-
     clearAlert();
     document.querySelector(".groqopilot-header").style.display = "flex";
     messageList.style.display = "flex";
@@ -102,7 +100,7 @@ function updateMessageList(messages) {
 
     // scroll to the beginning of the last message
     messageList.scrollTop = messageList.scrollHeight;
-
+    hljs.highlightAll();
 }
 
 function addCodeActionIcons(preElement) {
