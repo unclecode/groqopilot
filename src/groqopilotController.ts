@@ -31,7 +31,7 @@ export class GroqopilotController {
                 "type": "password", 
                 "value": this._settings.api_key.value || "" 
             };
-            this._settings.whisper_api_key = { "type": "password", "value": this._settings.whisper_api_key.value || "" };
+            // this._settings.whisper_api_key = { "type": "password", "value": this._settings.whisper_api_key.value || "" };
             this._settings.system_prompt = { 
                 "type": "text", "value": this._settings.system_prompt?.value || "You are a programming assistant helping me to write code."
             };
