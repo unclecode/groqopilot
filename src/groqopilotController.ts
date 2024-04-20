@@ -46,7 +46,7 @@ export class GroqopilotController {
         }
         // Add "models" and values are "Mixtral8x7b", "Llama70b", "Gemma:7b", for this value type os enum
         if (!this._settings.model) {
-            this._settings.model = { "type": "enum", "value": ["llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
+            this._settings.model = { "type": "enum", "value": ["llama3-70b-8192","llama3-8b-8192","llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
         }
         if (!this._settings.rerank) {
             this._settings.rerank = { "type": "boolean", "value": false, "description": "Generate multiple responses and re-rank them to get the best response." };
