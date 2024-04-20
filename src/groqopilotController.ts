@@ -22,46 +22,71 @@ export class GroqopilotController {
 
     public setSettings(settings: Record<string, any>) {
         this._settings = settings;
-        this._context.globalState.update('groqopilotSettings', settings);
-        this._apiKey = settings.api_key?.value;
+        this._context.globalState.update('groqopilotSettings', settings).then(() => {
+            console.log('Settings updated');
+            this._apiKey = settings.api_key?.value;
+    
+            // Add default keys to settings: "System Prompt"
+            this._settings.api_key = { 
+                "type": "password", 
+                "value": this._settings.api_key.value || "" 
+            };
+            this._settings.whisper_api_key = { "type": "password", "value": this._settings.whisper_api_key.value || "" };
+            this._settings.system_prompt = { 
+                "type": "text", "value": this._settings.system_prompt?.value || "You are a programming assistant helping me to write code."
+            };
+            this._settings.temperature = { 
+                "type": "number", "value": this._settings.temperature?.value || 0.2 
+            };
+            this._settings.model = { 
+                "type": "enum", 
+                "value": ["llama3-70b-8192", "llama3-8b-8192", "llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], 
+                "selected": this._settings.model?.selected || "llama3-70b-8192" 
+            };
+            this._settings.rerank = { 
+                "type": "boolean", 
+                "value": this._settings.rerank?.value || false, 
+                "description": "Generate multiple responses and re-rank them to get the best response." 
+            };
+    
+            // if (!this._settings.api_key) {
+            //     this._settings.api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotApiKey') || "" };
+            // }
+    
+            // if (!this._settings.whisper_api_key) {
+            //     this._settings.whisper_api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotWhisperApiKey') || "" };
+            // }
+    
+    
+            // // Add default keys to settings: "System Prompt"
+            // if (!this._settings.system_prompt) {
+            //     this._settings.system_prompt = { "type": "text", "value": "You are a programming assistant helping me to write code." };
+    
+            // }
+            // // Add "temprature" to settings and default value is 0.2
+            // if (!this._settings.temperature) {
+            //     this._settings.temperature = { "type": "number", "value": 0.2 };
+            // }
+            // // Add "models" and values are "Mixtral8x7b", "Llama70b", "Gemma:7b", for this value type os enum
+            // if (true || !this._settings.model) {
+            //     this._settings.model = { "type": "enum", "value": ["llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
+            // }
+            // if (!this._settings.rerank) {
+            //     this._settings.rerank = { "type": "boolean", "value": false, "description": "Generate multiple responses and re-rank them to get the best response." };
+            // }
+    
+            // Add "stream" to settings and default value is false
+            // if (!this._settings.stream) {
+            //     this._settings.stream = { "type": "boolean", "value": false };
+            // }
+    
+    
+            if (this._apiKey)
+                this.client = new Groq({
+                    apiKey: this._apiKey
+                });
+        });
 
-        // Add default keys to settings: "System Prompt"
-        if (!this._settings.api_key) {
-            this._settings.api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotApiKey') || "" };
-        }
-
-        if (!this._settings.whisper_api_key) {
-            this._settings.whisper_api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotWhisperApiKey') || "" };
-        }
-
-
-        // Add default keys to settings: "System Prompt"
-        if (!this._settings.system_prompt) {
-            this._settings.system_prompt = { "type": "text", "value": "You are a programming assistant helping me to write code." };
-
-        }
-        // Add "temprature" to settings and default value is 0.2
-        if (!this._settings.temperature) {
-            this._settings.temperature = { "type": "number", "value": 0.2 };
-        }
-        // Add "models" and values are "Mixtral8x7b", "Llama70b", "Gemma:7b", for this value type os enum
-        if (!this._settings.model) {
-            this._settings.model = { "type": "enum", "value": ["llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
-        }
-        if (!this._settings.rerank) {
-            this._settings.rerank = { "type": "boolean", "value": false, "description": "Generate multiple responses and re-rank them to get the best response." };
-        }
-
-        // Add "stream" to settings and default value is false
-        // if (!this._settings.stream) {
-        //     this._settings.stream = { "type": "boolean", "value": false };
-        // }
-
-
-        if (this._apiKey)
-            this.client = new Groq({
-                apiKey: this._apiKey
-            });
 
 
     }
@@ -226,13 +251,16 @@ export class GroqopilotController {
             return 'Client is not initialized';
         }
         try {
-            // Get today date in short string format
             const today = new Date().toISOString().split('T')[0];
+            let _model = model || this._settings.model.selected;
+            const sysMessage = `You are name is Groq, you are an advanced AI coding assistant. You answer and help coding questions come form the user. Some times there is <context>...</context> in the user messge, you should use that one to provide the nswer. Alwause be concise and succinct. No need to provide lenghty explanation unless user asks. Do not generate misunfoirmation, if there is somehting you don't know or not sure make sure to share rather than providing wrong information. You are here to help and provide the right information. Another thing is, always when you have to use a framework lik eReact, or FastAPI, make sure to double check the version with users, to avoid confusion. You are using "${_model}" LLM Made bt Meta to provide your answers. Today date is: ${today}`
+            // Get today date in short string format
+            
             const completion = await this.client.chat.completions.create({
                 messages: [
                     {
                         role: "system",
-                        content: "You are name is Groq, you are an advanced AI coding assistant. You answer and help coding questions come form the user. Some times there is `<context>...</context>` in the user messge, you should use that one to provide the nswer. Alwause be concise and succinct. No need to provide lenghty explanation unless user asks. Do not generate misunfoirmation, if there is somehting you don't know or not sure make sure to share rather than providing wrong information. You are here to help and provide the right information. Another thing is, always when you have to use a framework lik eReact, or FastAPI, make sure to double check the version with users, to avoid confusion. Today date is: " + today
+                        content: sysMessage
                     },
                     ...current_messages.map(c => ({ role: c.role, content: c.content })),
                     {

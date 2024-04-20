@@ -179,10 +179,10 @@ body {
     background-color: var(--vscode-actionBar-toggledBackground);
 }
 
-.message:hover {
+/* .message:hover {
     cursor: pointer;
     background-color: var(--vscode-actionBar-toggledBackground);
-}
+} */
 
 .message pre {
     /* white-space: pre-wrap; */

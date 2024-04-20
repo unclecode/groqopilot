@@ -71,7 +71,8 @@ function showSettings(settings) {
 
     for (const key in settings) {
         // TODO: Temporary
-        if ( false && key == "whisper_api_key" ) 
+        const skip_keys = ["rerank", "whisper_api_key"];
+        if ( true && skip_keys.includes(key))
             continue;
         
         const settingElement = document.createElement("div");
