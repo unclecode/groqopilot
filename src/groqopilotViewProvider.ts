@@ -134,7 +134,9 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
                 catch (error) {
                     console.log('Error in webviewReady', error);
                 }
-            });
+
+            }
+        });
 
         // If this._controller.getSettings() is not {} then send the settings to the webview
         if (Object.keys(this._controller.getSettings()).length !== 0) {
