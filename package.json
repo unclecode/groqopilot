@@ -12,7 +12,7 @@
         "url": "https://github.com/unclecode/groqopilot.git"
     },
     "publisher": "unclecode",
-    "version": "0.0.8",
+    "version": "0.0.81",
     "engines": {
         "vscode": "^1.87.0"
     },
