@@ -33,14 +33,14 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
                 case 'sendMessage':
                     const sendResult = await this._controller.sendMessage(message.content, message.context);
                     if (sendResult.status === 'success') {
-                        webviewView.webview.postMessage({ command: 'updateMessages', messages: this._controller.getSessionMessages(this._controller['_activeSessionId']) , sessionId: message.sessionId});
+                        webviewView.webview.postMessage({ command: 'updateMessages', messages: this._controller.getSessionMessages(this._controller['_activeSessionId']), sessionId: message.sessionId });
                     }
                     else
                         webviewView.webview.postMessage({ command: 'showError', error: sendResult.message, action: "sendMessage" });
                     break;
                 case 'editMessage':
                     const editedMessage = await this._controller.editMessage(message.sessionId, message.messageIndex, message.newContent);
-                    webviewView.webview.postMessage({ command: 'updateMessages', messages: this._controller.getSessionMessages(this._controller['_activeSessionId']) , sessionId: message.sessionId});
+                    webviewView.webview.postMessage({ command: 'updateMessages', messages: this._controller.getSessionMessages(this._controller['_activeSessionId']), sessionId: message.sessionId });
                     break;
                 case 'deleteMessage':
                     await this._controller.deleteMessage(message.sessionId, message.messageIndex);
@@ -121,23 +121,27 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
                     const transcribedText = await extractTextFromAudio(audioPath, this._controller.getSettings().whisper_api_key.value);
                     webviewView.webview.postMessage({ command: 'transcribedText', text: transcribedText });
                     await this.audioRecorder.cleanup();
-                    break;               
+                    break;
 
             }
             if (message.command === 'webviewReady') {
                 webviewView.webview.postMessage({ command: 'getSettings', settings: this._controller.getSettings() });
-                if (this._controller['_activeSessionId']){
-                    webviewView.webview.postMessage({ command: 'updateMessages', messages: this._controller.getSessionMessages(this._controller['_activeSessionId']), sessionId: this._controller['_activeSessionId'] });
+                try {
+                    if (this._controller['_activeSessionId']) {
+                        webviewView.webview.postMessage({ command: 'updateMessages', messages: this._controller.getSessionMessages(this._controller['_activeSessionId']), sessionId: this._controller['_activeSessionId'] });
+                    }
                 }
+                catch (error) {
+                    console.log('Error in webviewReady', error);
                 }
-        });
+            });
 
         // If this._controller.getSettings() is not {} then send the settings to the webview
         if (Object.keys(this._controller.getSettings()).length !== 0) {
             webviewView.webview.postMessage({ command: 'getSettings', settings: this._controller.getSettings() });
         }
 
-        
+
     }
 
     public createNewSession(): string {
