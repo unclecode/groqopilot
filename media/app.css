@@ -309,6 +309,11 @@ body {
     color: #fff;
     border: none;
 }
+.button.outlined {
+    background: transparent;
+    border: 1px solid #cb4217;
+    color: #cb4217;
+}
 
 .examples {
     display: flex;

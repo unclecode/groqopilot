@@ -60,6 +60,10 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
 
                     webviewView.webview.postMessage({ command: 'settingsUpdated', settings: this._controller.getSettings() });
                     break;
+                case 'resetSettings':
+                    this._controller.resetSettings();
+                    webviewView.webview.postMessage({ command: 'getSettings', settings: this._controller.getSettings() });
+                    break;
                 case 'insertCode':
                     if (editor && editor.document.isUntitled === false) {
                         editor.edit((editBuilder) => {
@@ -125,7 +129,12 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
             }
         });
 
-        webviewView.webview.postMessage({ command: 'getSettings', settings: this._controller.getSettings() });
+        // If this._controller.getSettings() is not {} then send the settings to the webview
+        if (Object.keys(this._controller.getSettings()).length !== 0) {
+            webviewView.webview.postMessage({ command: 'getSettings', settings: this._controller.getSettings() });
+        }
+
+        
     }
 
     public createNewSession(): string {

@@ -7,7 +7,7 @@ function showSettings(settings) {
     const footer = document.querySelector(".groqopilot-footer");
 
 
-    document.querySelector(".groqopilot-header").style.display = "none";
+    // document.querySelector(".groqopilot-header").style.display = "none";
     messageList.style.display = "none";
     sessionHistory.style.display = "none";
     footer.style.display = "none";
@@ -67,7 +67,19 @@ function showSettings(settings) {
         });
         vscode.postMessage({ command: "updateSettings", settings: updatedSettings });
     });
+
+    // Create a Rest button, which post a message to the extension to reset the settings
+    const settingResetButton = document.createElement("button");
+    settingResetButton.classList.add("button");
+    settingResetButton.classList.add("outlined");
+    settingResetButton.textContent = "Reset Settings";
+    settingResetButton.addEventListener("click", () => {
+        // clear the settings
+        vscode.postMessage({ command: "resetSettings" });
+    } );
+
     headerRow.appendChild(settingSubmitButton);
+    headerRow.appendChild(settingResetButton);
 
     for (const key in settings) {
         // TODO: Temporary
@@ -80,6 +92,9 @@ function showSettings(settings) {
 
         const labelElement = document.createElement("label");
         labelElement.textContent = key.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase()) ;
+        // if (key == "api_key") {
+        //     labelElement.textContent = "Groq " + labelElement.textContent
+        // }
         // if settings[key]["description"] exists att another label within small tage with the description
         let smallElement
         if (settings[key]["description"]) {
@@ -143,17 +158,32 @@ function showSettings(settings) {
     }
 }
 
+function hideSettings() {
+    const messageList = document.getElementById("message-list");
+    const sessionHistory = document.getElementById("session-history");
+    const settingsElement = document.getElementById("settings");
+    const footer = document.querySelector(".groqopilot-footer");
+
+    document.querySelector(".groqopilot-header").style.display = "flex";
+    messageList.style.display = "flex";
+    sessionHistory.style.display = "flex";
+    footer.style.display = "flex";
+    settingsElement.style.display = "none";
+}
+
 function checkSettingValidity(settings) {
     const micBtn = document.getElementById("microphone-btn");
     const footer = document.querySelector(".groqopilot-footer");
     
-    if (!settings.whisper_api_key.value) {
+    if (!settings.whisper_api_key?.value) {
         micBtn.style.display = "none";
     } else {
         micBtn.style.display = "flex";
     }
-    if (!settings.api_key.value) {
-        setAlert("API Key is not set. Update it in the settings.", "warning");
+    if (!settings.api_key?.value) {
+        // const htmlMessage = `<p>API Key is not set. Update it in the <a href="#" onclick="showSettingsTab()">settings</a>.</p>`;        
+        // setAlert(htmlMessage, "warning");
+        // setAlert("API Key is not set. Update it in the settings.", "warning");
         footer.style.display = "none";
         return false;
     } else {

@@ -6,7 +6,11 @@
 
 let vscode = null;
 let activeSessionId = null;
-
+const showSettingsTab = () => {
+    if (window._settings) {
+        showSettings(window._settings);
+    }
+};
 (function () {
     vscode = acquireVsCodeApi();
 
@@ -99,16 +103,28 @@ let activeSessionId = null;
                 showSessionHistory(message.sessions);
                 break;
             case "showSettings":
+                // set setting to global scope
+                window._settings = message.settings;
                 showSettings(message.settings);
                 checkSettingValidity(message.settings);
                 break;
             case "getSettings":
-                checkSettingValidity(message.settings);
+                window._settings = message.settings;
+                if (!checkSettingValidity(message.settings)){
+                    showSettings(message.settings);
+                    const htmlMessage = `<p>To start please set your GROQ API Key.<br><small>Do not forget to click on the "Save Settings" button.</small></p>`;
+                    setAlert(htmlMessage, "info");
+                }
                 break;
             case "settingsUpdated":
                 if (checkSettingValidity(message.settings)) {
                     setAlert("Settings updated successfully", "info", 1000);
                     vscode.postMessage({ command: "createNewSession" });
+                    window._settings = message.settings;
+                    hideSettings();
+                }
+                else {
+                    setAlert("Oops! Seems API Key is not set. Please set it and try again.", "error");
                 }
                 break;
             case "showError":

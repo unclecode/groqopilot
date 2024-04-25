@@ -15,76 +15,85 @@ export class GroqopilotController {
     constructor(extensionUri: vscode.Uri, context: vscode.ExtensionContext) {
         this._extensionUri = extensionUri;
         this._context = context;
+        // context.globalState.update("groqopilotSettings", undefined);
         this._loadSessions();
         this._settings = this._context.globalState.get<Record<string, any>>('groqopilotSettings') || {};
         this.setSettings(this._settings);
     }
 
+    public resetSettings() {
+        this._context.globalState.update('groqopilotSettings', undefined);
+        this._settings = {};
+        this._apiKey = undefined;
+        // this.client = null;
+        this.setSettings({});
+    }
+
     public setSettings(settings: Record<string, any>) {
         this._settings = settings;
+        console.log('Settings updated');
+        this._apiKey = settings?.api_key?.value;
+
+        // Add default keys to settings: "System Prompt"
+        this._settings.api_key = { 
+            "type": "password", 
+            "value": this._settings?.api_key?.value || ""
+        };
+        // this._settings.whisper_api_key = { "type": "password", "value": this._settings.whisper_api_key.value || "" };
+        this._settings.system_prompt = { 
+            "type": "text", "value": this._settings?.system_prompt?.value || "You are a programming assistant helping me to write code."
+        };
+        this._settings.temperature = { 
+            "type": "number", "value": this._settings?.temperature?.value || 0.2 
+        };
+        this._settings.model = { 
+            "type": "enum", 
+            "value": ["llama3-70b-8192", "llama3-8b-8192", "llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], 
+            "selected": this._settings?.model?.selected || "llama3-70b-8192" 
+        };
+        this._settings.rerank = { 
+            "type": "boolean", 
+            "value": this._settings?.rerank?.value || false, 
+            "description": "Generate multiple responses and re-rank them to get the best response." 
+        };
+
+        // if (!this._settings.api_key) {
+        //     this._settings.api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotApiKey') || "" };
+        // }
+
+        // if (!this._settings.whisper_api_key) {
+        //     this._settings.whisper_api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotWhisperApiKey') || "" };
+        // }
+
+
+        // // Add default keys to settings: "System Prompt"
+        // if (!this._settings.system_prompt) {
+        //     this._settings.system_prompt = { "type": "text", "value": "You are a programming assistant helping me to write code." };
+
+        // }
+        // // Add "temprature" to settings and default value is 0.2
+        // if (!this._settings.temperature) {
+        //     this._settings.temperature = { "type": "number", "value": 0.2 };
+        // }
+        // // Add "models" and values are "Mixtral8x7b", "Llama70b", "Gemma:7b", for this value type os enum
+        // if (true || !this._settings.model) {
+        //     this._settings.model = { "type": "enum", "value": ["llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
+        // }
+        // if (!this._settings.rerank) {
+        //     this._settings.rerank = { "type": "boolean", "value": false, "description": "Generate multiple responses and re-rank them to get the best response." };
+        // }
+
+        // Add "stream" to settings and default value is false
+        // if (!this._settings.stream) {
+        //     this._settings.stream = { "type": "boolean", "value": false };
+        // }
+
+
+        if (this._apiKey)
+            this.client = new Groq({
+                apiKey: this._apiKey
+            });
         this._context.globalState.update('groqopilotSettings', settings).then(() => {
-            console.log('Settings updated');
-            this._apiKey = settings.api_key?.value;
-    
-            // Add default keys to settings: "System Prompt"
-            this._settings.api_key = { 
-                "type": "password", 
-                "value": this._settings.api_key.value || "" 
-            };
-            // this._settings.whisper_api_key = { "type": "password", "value": this._settings.whisper_api_key.value || "" };
-            this._settings.system_prompt = { 
-                "type": "text", "value": this._settings.system_prompt?.value || "You are a programming assistant helping me to write code."
-            };
-            this._settings.temperature = { 
-                "type": "number", "value": this._settings.temperature?.value || 0.2 
-            };
-            this._settings.model = { 
-                "type": "enum", 
-                "value": ["llama3-70b-8192", "llama3-8b-8192", "llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], 
-                "selected": this._settings.model?.selected || "llama3-70b-8192" 
-            };
-            this._settings.rerank = { 
-                "type": "boolean", 
-                "value": this._settings.rerank?.value || false, 
-                "description": "Generate multiple responses and re-rank them to get the best response." 
-            };
-    
-            // if (!this._settings.api_key) {
-            //     this._settings.api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotApiKey') || "" };
-            // }
-    
-            // if (!this._settings.whisper_api_key) {
-            //     this._settings.whisper_api_key = { "type": "password", "value": this._context.globalState.get<string>('groqopilotWhisperApiKey') || "" };
-            // }
-    
-    
-            // // Add default keys to settings: "System Prompt"
-            // if (!this._settings.system_prompt) {
-            //     this._settings.system_prompt = { "type": "text", "value": "You are a programming assistant helping me to write code." };
-    
-            // }
-            // // Add "temprature" to settings and default value is 0.2
-            // if (!this._settings.temperature) {
-            //     this._settings.temperature = { "type": "number", "value": 0.2 };
-            // }
-            // // Add "models" and values are "Mixtral8x7b", "Llama70b", "Gemma:7b", for this value type os enum
-            // if (true || !this._settings.model) {
-            //     this._settings.model = { "type": "enum", "value": ["llama2-70b-4096", "mixtral-8x7b-32768", "gemma-7b-it"], "selected": "mixtral-8x7b-32768" };
-            // }
-            // if (!this._settings.rerank) {
-            //     this._settings.rerank = { "type": "boolean", "value": false, "description": "Generate multiple responses and re-rank them to get the best response." };
-            // }
-    
-            // Add "stream" to settings and default value is false
-            // if (!this._settings.stream) {
-            //     this._settings.stream = { "type": "boolean", "value": false };
-            // }
-    
-    
-            if (this._apiKey)
-                this.client = new Groq({
-                    apiKey: this._apiKey
-                });
         });
 
 
@@ -140,7 +149,7 @@ export class GroqopilotController {
     public async sendMessage(message: string, context: string = ""): Promise<any> {
         if (!this._apiKey) {
             vscode.window.showErrorMessage('API key not set. Please configure the API key in the settings.');
-            return // { role: 'assistant', content: 'API key not set. Please configure the API key in the settings.' };
+            return { role: 'assistant', content: 'API key not set. Please configure the API key in the settings.' };
         }
 
         if (!this._activeSessionId) {
