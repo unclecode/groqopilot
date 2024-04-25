@@ -126,7 +126,10 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
             }
             if (message.command === 'webviewReady') {
                 webviewView.webview.postMessage({ command: 'getSettings', settings: this._controller.getSettings() });
-            }
+                if (this._controller['_activeSessionId']){
+                    webviewView.webview.postMessage({ command: 'updateMessages', messages: this._controller.getSessionMessages(this._controller['_activeSessionId']), sessionId: this._controller['_activeSessionId'] });
+                }
+                }
         });
 
         // If this._controller.getSettings() is not {} then send the settings to the webview
