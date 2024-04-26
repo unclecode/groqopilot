@@ -1,7 +1,7 @@
 {
     "name": "groqopilot",
     "displayName": "Groqopilot",
-    "description": "Copilot, set free by knights known as Groq.",
+    "description": "Llama3 + Groq = The fastest coding assistant.",
     "icon": "assets/groq-icon-white.png",
     "galleryBanner": {
         "color": "#F55036",
@@ -12,7 +12,7 @@
         "url": "https://github.com/unclecode/groqopilot.git"
     },
     "publisher": "unclecode",
-    "version": "0.0.81",
+    "version": "0.0.82",
     "engines": {
         "vscode": "^1.87.0"
     },

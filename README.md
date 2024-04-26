@@ -2,13 +2,14 @@
 
 ![GroqoPilot](https://res.cloudinary.com/kidocode/image/upload/v1714062326/output_s7a9gh.gif)
 
-Groqopilot or Qopilot (still deciding on the name ;) is a Visual Studio Code extension that integrates Groq, a high-speed inference engine, into your coding environment. Driven by the desire to use Groq everywhere, I built this for myself, hoping it can help others too.
+Groqopilot is a Visual Studio Code extension that integrates Llama3, and Groq, a high-speed inference engine, into your coding environment. Driven by the desire to use Groq everywhere, I built this for myself, hoping it can help others too.
 
 ## Features
 
 - **Chat Interface**: Like Copilot, but with only some essential features.
 - **Code Generation**: Interacts with the active editor. Select code, ask a question, and the selection becomes the context for your query. Responses can be inserted or replace the selected text or cursor location.
 - **Session Management**: Stores each chat session, letting you review your history and access them.
+- **Auto-Completion [Coming Soon]**: Provides suggestions for code completions based on the active editor's context.
 
 ## Installation
 
