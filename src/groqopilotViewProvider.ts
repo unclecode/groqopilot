@@ -159,12 +159,14 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
 
 
     public getSessions(): [string, Record<string, any>][] {
-        return this._controller.getSessions();
+        let sessions = this._controller.getSessions();
+
+        return sessions;
     }
 
     public showSessionHistory(sessions: [string, Record<string, any>][]) {
         if (this._view) {
-            this._view.webview.postMessage({ command: 'showSessionHistory', sessions: this.getSessions() });
+            this._view.webview.postMessage({ command: 'showSessionHistory', sessions: sessions});
         }
     }
 

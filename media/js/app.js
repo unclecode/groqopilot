@@ -53,7 +53,14 @@ const showSettingsTab = () => {
     sendMessageBtn.addEventListener("click", () => {
         const message = messageInput.value.trim();
         if (message) {
-            vscode.postMessage({ command: "getSelectedText", content: message });
+            // vscode.postMessage({ command: "getSelectedText", content: message });
+
+            const sendingMessage = createMessageElement({ role: "status", content: `Sending: ${message}` });
+            messageList.appendChild(sendingMessage);
+            let content = message;
+            let context = "";
+            vscode.postMessage({ command: "sendMessage", content: content, context: context });
+
             messageInput.value = "";
             adjustTextareaHeight(messageInput);
         }

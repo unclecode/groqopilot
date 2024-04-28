@@ -18,6 +18,13 @@ function showSessionHistory(sessions) {
 
     let anySessionFound = false;
 
+    // sort sessions by last message date descending
+    // sessions.sort((a, b) => {
+    //     const aLastMessage = a[1].messages[a[1].messages.length - 1];
+    //     const bLastMessage = b[1].messages[b[1].messages.length - 1];
+    //     return new Date(aLastMessage.date) - new Date(bLastMessage.date);
+    // });
+
     sessions.forEach(([sessionId, sessionData]) => {
         if (sessionData.messages.length === 0) {
             return;

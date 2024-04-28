@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 const Groq = require("groq-sdk");
 import * as marked from 'marked';
-
-
+// import everything from current folder utils.ts
+import { extractMentions, readFileContent, getSelectedText, fetchUrlContent } from './utils';
 export class GroqopilotController {
     private readonly _extensionUri: vscode.Uri;
     private _apiKey: string | undefined;
-    private _sessions: { [key: string]: { messages: Message[] } } = {};
+    private _sessions: { [key: string]: { messages: Message[], created: number } } = {};
     private _activeSessionId: string = '';
     private _context: vscode.ExtensionContext;
     private _settings: Record<string, any> = {};
@@ -16,9 +16,21 @@ export class GroqopilotController {
         this._extensionUri = extensionUri;
         this._context = context;
         // context.globalState.update("groqopilotSettings", undefined);
+        // context.globalState.update("updated_data_for_created", undefined);
         this._loadSessions();
         this._settings = this._context.globalState.get<Record<string, any>>('groqopilotSettings') || {};
         this.setSettings(this._settings);
+
+        // Check if the "update_data_for_created" doesnt exist in the global state, then update the data for the created
+        if (!this._context.globalState.get("updated_data_for_created")) {
+            for (const session in this._sessions) {
+                // Get the created from session ID which is like `session_${Date.now()}` and set it to the created
+                let created = +session.split('_')[1];
+                this._sessions[session].created = parseInt(created);
+            }
+            this._context.globalState.update("updated_data_for_created", true);
+            this._saveSessions();
+        }
     }
 
     public resetSettings() {
@@ -145,7 +157,11 @@ export class GroqopilotController {
         }
     }
 
-
+    // Explain the code @hello.py
+    // Use @https://python.langchain.com/docs/use_cases/web_scraping to create a function in python get a url and scrape the content
+    // Use @https://chrlschn.medium.com/cheap-and-easy-way-to-scrape-sites-for-llm-processing-2280df4a137 to create a function in python get a url and scrape the content
+    // Use @https://chrlschn.medium.com/cheap-and-easy-way-to-scrape-sites-for-llm-processing-2280df4a137 to create a FastAPI server, with an api get a url, then scrap the content, remove unnessary tags such as script, styles, heads and try to extract clean text from the page and return that back.
+    // Use @https://medium.com/@jacobnarayan/how-to-make-a-web-scraper-with-javascript-66270186ce77 to create an express nodejs server, with an api get a url, then scrap the content, remove unnessary tags such as script, styles, heads and try to extract clean text from the page and return that back.
     public async sendMessage(message: string, context: string = ""): Promise<any> {
         if (!this._apiKey) {
             vscode.window.showErrorMessage('API key not set. Please configure the API key in the settings.');
@@ -157,8 +173,57 @@ export class GroqopilotController {
         }
 
         let message_context = message;
-        if (context) {
-            message_context = `${context}\n\nUse above context to get the result for the following query (I need concice and right to the point answer, less explanation, unless it requested in the following query):\n\n${message}`;
+
+        const selectedContext = getSelectedText();
+
+        if (selectedContext) {
+            const selectedTextInfo = selectedContext;
+            const formattedText = `\`\`\`${selectedTextInfo.filename}\n${selectedTextInfo.text}\n\`\`\``;
+            const messageText = `[Selected code from ${selectedTextInfo.filename} (lines ${selectedTextInfo.startLine}-${selectedTextInfo.endLine})]\n${formattedText}`;
+            context = messageText;
+
+            message_context = `CONTEXT (Selectec code):\n<context>\n${context}\n</context>\n\nUse above context to get the result for the following query (I need concice and right to the point answer, less explanation, unless it requested in the following query):\n\n${message}`;
+        }
+
+        const mentionedItems = extractMentions(message);
+        let fileContexts = [];
+        let urlContent = []
+        // iterate. those mentioed items, type is file call readFileContent and get the content and add it to the fileContexts
+        for (const mention of mentionedItems) {
+            if (mention.type === 'file') {
+                const content = readFileContent(mention.value);
+                if (content) {
+                    fileContexts.push({
+                        text: content,
+                        fileName: mention.value,
+                        rendered: `\n[FILE ${fileContexts.length + 1}]: \`\`\`${mention.value}\n${content.trim()}\n\`\`\``
+                    });
+                    // In message_context replace the @mention value with the "[FILE ${fileContexts.length}]"
+                    message_context = message_context.replace(`@${mention.value}`, `[FILE ${fileContexts.length}]`);
+                }
+            }
+            else if (mention.type === 'url') {
+                const content = await fetchUrlContent(mention.value);
+                if (content) {
+                    urlContent.push({
+                        text: content,
+                        url: mention.value,
+                        rendered: `\n[REF ${urlContent.length + 1}]: \`\`\`${mention.value}\n${content.trim()}\n\`\`\``
+                    });
+                    // In message_context replace the @mention value with the "[REF ${urlContent.length}]"
+                    message_context = message_context.replace(`@${mention.value}`, `[REF ${urlContent.length}]`);
+                }
+            }
+        };
+
+        if (fileContexts.length > 0) {
+            message_context = `${message_context}\n\nATTACHMENTS:\nFollowing files are attached to the query, you should consider them while providing the answer:\n\n<attachments>\n${fileContexts.map(file => file.rendered).join('\n\n')}\n</attachments>`;
+        }
+
+        if (urlContent.length > 0) {
+            message_context = `${message_context}\n\nREFERENCES:\nFollowing URLs are referenced in the query, you should consider them while providing the answer:\n\n<references>\n${urlContent.map(url => url.rendered).join('\n\n')}\n</references>`;
+
+            // now replace all "@mention.value" with 
         }
 
         // Get all current messages of session.
@@ -229,7 +294,7 @@ export class GroqopilotController {
     public createNewSession(): string {
         this.clearEmptySessions();
         const sessionId = `session_${Date.now()}`;
-        this._sessions[sessionId] = { messages: [] };
+        this._sessions[sessionId] = { messages: [] , created: +new Date() };
         this._activeSessionId = sessionId;
         this._saveSessions();
         return sessionId;
@@ -237,6 +302,8 @@ export class GroqopilotController {
 
     public getSessions(): [string, Record<string, any>][] {
         const items = Object.entries(this._sessions);
+        // sort the items by the created date
+        items.sort((a, b) => b[1].created1 - a[1].created1);
         return items;
     }
 
