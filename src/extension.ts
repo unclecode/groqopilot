@@ -10,6 +10,13 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
+        vscode.commands.registerCommand('groqopilot.autoComplete', () => {
+            provider.autoComplete();
+
+        })
+    );
+
+    context.subscriptions.push(
         vscode.commands.registerCommand('groqopilot.openPanel', () => {
             const panel = vscode.window.createWebviewPanel(
                 GroqopilotViewProvider.viewType,
@@ -41,5 +48,33 @@ export function activate(context: vscode.ExtensionContext) {
             // vscode.window.showInformationMessage('Show Settings');
         })
     );
+
+    // // Register the acceptSuggestion command
+    // context.subscriptions.push(
+    //     vscode.commands.registerCommand('groqopilot.acceptSuggestion', () => {
+    //         vscode.commands.executeCommand('acceptSuggestion');
+    //     })
+    // );
+
+    // // Register the nextSuggestion command
+    // context.subscriptions.push(
+    //     vscode.commands.registerCommand('groqopilot.nextSuggestion', () => {
+    //         vscode.commands.executeCommand('nextSuggestion');
+    //     })
+    // );
+
+    // // Register the previousSuggestion command
+    // context.subscriptions.push(
+    //     vscode.commands.registerCommand('groqopilot.previousSuggestion', () => {
+    //         vscode.commands.executeCommand('previousSuggestion');
+    //     })
+    // );
+
+    // // Register the cancelSuggestion command
+    // context.subscriptions.push(
+    //     vscode.commands.registerCommand('groqopilot.cancelSuggestion', () => {
+    //         vscode.commands.executeCommand('cancelSuggestion');
+    //     })
+    // );
 }
 

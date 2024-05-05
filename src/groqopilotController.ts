@@ -1,8 +1,12 @@
+// @ts-nocheck
+
+
 import * as vscode from 'vscode';
 const Groq = require("groq-sdk");
 import * as marked from 'marked';
 // import everything from current folder utils.ts
 import { extractMentions, readFileContent, getSelectedText, fetchUrlContent } from './utils';
+import { autocomplete, TOBECOMPLETED, deepseekCodeCompletion } from './autocomplete';
 export class GroqopilotController {
     private readonly _extensionUri: vscode.Uri;
     private _apiKey: string | undefined;
@@ -26,7 +30,7 @@ export class GroqopilotController {
             for (const session in this._sessions) {
                 // Get the created from session ID which is like `session_${Date.now()}` and set it to the created
                 let created = +session.split('_')[1];
-                this._sessions[session].created = parseInt(created);
+                this._sessions[session].created = created;
             }
             this._context.globalState.update("updated_data_for_created", true);
             this._saveSessions();
@@ -47,26 +51,32 @@ export class GroqopilotController {
         this._apiKey = settings?.api_key?.value;
 
         // Add default keys to settings: "System Prompt"
-        this._settings.api_key = { 
-            "type": "password", 
+        this._settings.api_key = {
+            "type": "password",
             "value": this._settings?.api_key?.value || ""
         };
         // this._settings.whisper_api_key = { "type": "password", "value": this._settings.whisper_api_key.value || "" };
-        this._settings.system_prompt = { 
+        this._settings.system_prompt = {
             "type": "text", "value": this._settings?.system_prompt?.value || "You are a programming assistant helping me to write code."
         };
-        this._settings.temperature = { 
-            "type": "number", "value": this._settings?.temperature?.value || 0.2 
+        this._settings.temperature = {
+            "type": "number", "value": this._settings?.temperature?.value || 0.2
         };
-        this._settings.model = { 
-            "type": "enum", 
-            "value": ["llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"], 
-            "selected": this._settings?.model?.selected || "llama3-8b-8192" 
+        this._settings.model = {
+            "type": "enum",
+            "value": ["llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"],
+            "selected": this._settings?.model?.selected || "llama3-8b-8192"
         };
-        this._settings.rerank = { 
-            "type": "boolean", 
-            "value": this._settings?.rerank?.value || false, 
-            "description": "Generate multiple responses and re-rank them to get the best response." 
+        // Add autocomplete model
+        this._settings.autocomplete_model = {
+            "type": "enum",
+            "value": ["ollama/deepseek-coder:1.3b-base", "groq/llama3-70b-8192", "groq/llama3-8b-8192"],
+            "selected": this._settings?.autocomplete_model?.selected || "groq/llama3-8b-8192"
+        };
+        this._settings.rerank = {
+            "type": "boolean",
+            "value": this._settings?.rerank?.value || false,
+            "description": "Generate multiple responses and re-rank them to get the best response."
         };
 
         // if (!this._settings.api_key) {
@@ -190,28 +200,29 @@ export class GroqopilotController {
         let urlContent = []
         // iterate. those mentioed items, type is file call readFileContent and get the content and add it to the fileContexts
         for (const mention of mentionedItems) {
-            if (mention.type === 'file') {
-                const content = readFileContent(mention.value);
+            if (!mention?.type || !mention?.value) continue;
+            if (mention?.type === 'file') {
+                const content = readFileContent(mention?.value);
                 if (content) {
                     fileContexts.push({
                         text: content,
-                        fileName: mention.value,
-                        rendered: `\n[FILE ${fileContexts.length + 1}]: \`\`\`${mention.value}\n${content.trim()}\n\`\`\``
+                        fileName: mention?.value,
+                        rendered: `\n[FILE ${fileContexts.length + 1}]: \`\`\`${mention?.value}\n${content.trim()}\n\`\`\``
                     });
                     // In message_context replace the @mention value with the "[FILE ${fileContexts.length}]"
-                    message_context = message_context.replace(`@${mention.value}`, `[FILE ${fileContexts.length}]`);
+                    message_context = message_context.replace(`@${mention?.value}`, `[FILE ${fileContexts.length}]`);
                 }
             }
-            else if (mention.type === 'url') {
-                const content = await fetchUrlContent(mention.value);
+            else if (mention?.type === 'url') {
+                const content = await fetchUrlContent(mention?.value);
                 if (content) {
                     urlContent.push({
                         text: content,
-                        url: mention.value,
-                        rendered: `\n[REF ${urlContent.length + 1}]: \`\`\`${mention.value}\n${content.trim()}\n\`\`\``
+                        url: mention?.value,
+                        rendered: `\n[REF ${urlContent.length + 1}]: \`\`\`${mention?.value}\n${content.trim()}\n\`\`\``
                     });
                     // In message_context replace the @mention value with the "[REF ${urlContent.length}]"
-                    message_context = message_context.replace(`@${mention.value}`, `[REF ${urlContent.length}]`);
+                    message_context = message_context.replace(`@${mention?.value}`, `[REF ${urlContent.length}]`);
                 }
             }
         };
@@ -294,7 +305,7 @@ export class GroqopilotController {
     public createNewSession(): string {
         this.clearEmptySessions();
         const sessionId = `session_${Date.now()}`;
-        this._sessions[sessionId] = { messages: [] , created: +new Date() };
+        this._sessions[sessionId] = { messages: [], created: +new Date() };
         this._activeSessionId = sessionId;
         this._saveSessions();
         return sessionId;
@@ -309,6 +320,23 @@ export class GroqopilotController {
 
     public getSessionMessages(sessionId: string): Message[] {
         return this._sessions[sessionId]?.messages || [];
+    }
+
+    async public getCompletions(language, content, position) {
+        try {
+            if (this._settings.autocomplete_model.selected.startsWith("ollama")) {
+                content = content.slice(0, position) + "<｜fim▁hole｜>" + content.slice(position);
+                const completions = await deepseekCodeCompletion(content, this._settings.autocomplete_model.selected.split("/")[1]);
+                return completions.suggestions;
+            } else if (this._settings.autocomplete_model.selected.startsWith("groq")) {
+                content = content.slice(0, position) + TOBECOMPLETED + content.slice(position);
+                const completions = await autocomplete(this.client, content, this._settings.autocomplete_model.selected.split("/")[1], "", language, 1, false, false);
+                return completions.suggestions;
+            }
+        } catch (error) {
+            console.error("Error connecting to the server:", error);
+            return ["Server Unavailable"];
+        }
     }
 
     public loadSession(sessionId: string) {
@@ -331,7 +359,7 @@ export class GroqopilotController {
             let _model = model || this._settings.model.selected;
             const sysMessage = `You are name is Groq, you are an advanced AI coding assistant. You answer and help coding questions come form the user. Some times there is <context>...</context> in the user messge, you should use that one to provide the nswer. Alwause be concise and succinct. No need to provide lenghty explanation unless user asks. Do not generate misunfoirmation, if there is somehting you don't know or not sure make sure to share rather than providing wrong information. You are here to help and provide the right information. Another thing is, always when you have to use a framework lik eReact, or FastAPI, make sure to double check the version with users, to avoid confusion. You are using "${_model}" LLM Made bt Meta to provide your answers. Today date is: ${today}`
             // Get today date in short string format
-            
+
             const completion = await this.client.chat.completions.create({
                 messages: [
                     {
@@ -358,7 +386,6 @@ export class GroqopilotController {
             return { status: 'error', message: error?.toString() };
         }
     }
-
 
     private async reRank(message: string, current_messages: Message[], N: number, top_k: number): Promise<any> {
         if (!this.client) {
@@ -436,6 +463,8 @@ final_response_for_user
             return { status: 'error', message: error?.toString() };
         }
     }
+
+
 
 }
 

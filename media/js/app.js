@@ -113,7 +113,7 @@ const showSettingsTab = () => {
                 // set setting to global scope
                 window._settings = message.settings;
                 showSettings(message.settings);
-                checkSettingValidity(message.settings);
+                // checkSettingValidity(message.settings);
                 break;
             case "getSettings":
                 window._settings = message.settings;

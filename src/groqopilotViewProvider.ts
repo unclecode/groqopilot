@@ -4,7 +4,8 @@ import { AudioRecorder } from './audioRecorder';
 import { getWebviewOptions } from './utils';
 import { extractTextFromAudio } from './audioTranscription';
 import { getHtmlForWebview } from './webviewContent';
-
+import debounce from 'lodash.debounce';
+const DEBOUNCE_DELAY = 200; // milliseconds
 class GroqopilotViewProvider implements vscode.WebviewViewProvider {
     public static readonly viewType = 'groqopilotView';
     private _extensionUri: vscode.Uri;
@@ -20,6 +21,62 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
         this._extensionUri = extensionUri;
         this._controller = new GroqopilotController(extensionUri, _context);
         this.audioRecorder = new AudioRecorder();
+        this.busyForCompletion = false;
+        this.readyForCompletion = false;
+        this.lastContent = '';
+
+        const debouncedProvideCompletions = debounce(this.generateCompletions, DEBOUNCE_DELAY);
+
+        vscode.languages.registerInlineCompletionItemProvider('*', {
+            provideInlineCompletionItems: async (document, position, context, cancellationToken) => {
+                // return debouncedProvideCompletions(document, position);
+                if (!this.busyForCompletion && this.readyForCompletion) {
+                    // show alert "Thinking..."
+                    vscode.window.setStatusBarMessage('Thinking...');
+                    let res = await this.generateCompletions(document, position);
+                    // hide alert "Thinking..."
+                    vscode.window.setStatusBarMessage('');
+                    this.readyForCompletion = false;
+
+                    return res.map((item) => {
+                        const lines = item.split('\n')
+                        const lastLine = lines[lines.length - 1];
+                        const endLine = position.line + lines.length - 1;
+                        const startPosition = new vscode.Position(position.line, position.character);
+                        const endCharacter = lines.length === 1 ? position.character + lastLine.length : lastLine.length;
+                        const endPosition = new vscode.Position(endLine, endCharacter);
+                        
+                        return {
+                            // insertText: item.replace(/\n/g, '\\u000A');
+                            insertText: item,
+                            range: new vscode.Range(startPosition, endPosition),
+                            command: { command: 'acceptSuggestion', title: 'Accept Suggestion' }
+                        };
+                    });
+                    
+                }
+
+            }
+        });
+
+
+
+
+
+        // vscode.window.onDidChangeTextEditorSelection((event) => {
+        //     // vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
+        //     const editor = vscode.window.activeTextEditor;
+        //     if (editor && event.textEditor.document === editor.document) {
+        //         const document = editor.document;
+        //         const content = document.getText();
+
+        //         if (this.lastContent !== content) {
+        //             vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
+        //             this.lastContent = content;
+        //         }
+
+        //     }
+        // });
     }
 
     public resolveWebviewView(webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext<unknown>, token: vscode.CancellationToken): void | Thenable<void> {
@@ -135,6 +192,14 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
                     console.log('Error in webviewReady', error);
                 }
 
+
+
+            }
+
+            if (editor) {
+                const document = editor.document;
+                const content = document.getText();
+                this.lastContent = content
             }
         });
 
@@ -143,6 +208,63 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
             webviewView.webview.postMessage({ command: 'getSettings', settings: this._controller.getSettings() });
         }
 
+
+
+
+
+    }
+
+    async public generateCompletions(document, position) {
+        this.busyForCompletion = true;
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            // Get the content of the active file
+            const document = editor.document;
+            const content = document.getText();
+
+            // Get the current cursor position
+            const position = editor.selection.active;
+            // Convert position to character index relative to content, from the beginning of the file
+            const positionOffset = document.offsetAt(position);
+            // Get active file name
+            const filename = editor.document.fileName;
+            // Get extension of active file  
+            const extension = filename.split('.').pop();
+            // Call controller to get completions
+            // const completions = ["hello 1\n\u2003\u2003\u2003hello 1.2\n\thello 1.3", "hello 2"]; // await this._controller.getCompletions(extension, content, positionOffset);
+            // const completions = ["hello 1\n\thello 1.2\n\thello 1.3", "hello 2"]; // await this._controller.getCompletions(extension, content, positionOffset);
+            const completions = await this._controller.getCompletions(extension, content, positionOffset);
+
+            const suggestions = completions;
+            // this.busyForCompletion = false;
+            setTimeout(() => {
+                this.busyForCompletion = false;
+            }, DEBOUNCE_DELAY)
+
+            return suggestions;
+
+        }
+        else {
+            return [];
+        }
+
+    }
+
+    async public autoComplete() {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            const document = editor.document;
+            const content = document.getText();
+            this.readyForCompletion = true;
+            // if (this.lastContent !== content) {
+            vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
+            this.lastContent = content;
+            // }
+
+            // Temporory show this suggestions "Thinking..."
+
+
+        }
 
     }
 
@@ -166,7 +288,7 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
 
     public showSessionHistory(sessions: [string, Record<string, any>][]) {
         if (this._view) {
-            this._view.webview.postMessage({ command: 'showSessionHistory', sessions: sessions});
+            this._view.webview.postMessage({ command: 'showSessionHistory', sessions: sessions });
         }
     }
 
