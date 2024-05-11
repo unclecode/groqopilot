@@ -46,18 +46,32 @@ export function getSelectedText() {
 }
 
 export function extractMentions(text: string): { type: string; value: string; }[] {
-    const regex = /@(?:\w+\.\w+|https?:\/\/\S+)/g;
-    const matches = text.match(regex);
+    const fileRegex = /@(?!\s)(?!https?:\/\/)\S+/g;
+    const urlRegex = /@(https?:\/\/\S+)/g;
+    const fileMatches = text.match(fileRegex);
+    const urlMatches = text.match(urlRegex);
     let results: { type: string; value: string; }[] = [];
 
-    if (matches !== null) {
-        const matchesArray: string[] = Array.from(matches);
-        results = matchesArray.map(mention => {
+    if (fileMatches !== null) {
+        const fileMatchesArray: string[] = Array.from(fileMatches);
+        const fileResults = fileMatchesArray.map(mention => {
             return {
-                type: mention.startsWith('@http') ? 'url' : 'file',
+                type: 'file',
                 value: mention.slice(1)
             };
         });
+        results.push(...fileResults);
+    }
+
+    if (urlMatches !== null) {
+        const urlMatchesArray: string[] = Array.from(urlMatches);
+        const urlResults = urlMatchesArray.map(mention => {
+            return {
+                type: 'url',
+                value: mention.slice(1)
+            };
+        });
+        results.push(...urlResults);
     }
 
     return results;
@@ -80,14 +94,31 @@ export function readFileContent(relativeFilePath: string) {
 
     if (basePath === '') {
         vscode.window.showErrorMessage('No workspace folder or open file found.');
-        return null;
+        return `Error: File not found: ${relativeFilePath}.\nNo workspace folder or open file found. Infor user to open a file or workspace folder or open a file in the editor.`;
     }
 
     const absoluteFilePath = path.join(basePath, relativeFilePath);
 
     if (!fs.existsSync(absoluteFilePath)) {
         vscode.window.showErrorMessage(`File not found: ${relativeFilePath}`);
-        return null;
+        return `Error: File not found: ${relativeFilePath}.\nFile not found in the project folder. Reminder user to check the file path and try again. If you have an idea why this file is not found, please let me know. Keep it short and concise. Thanks!`;
+    }
+
+    // Check if file is a textual kind, that can be read as string, and also check length, if more thena a threshold just cap it
+    let fileContent;
+    try {
+        fileContent = fs.readFileSync(absoluteFilePath, 'utf8');
+    } catch (error) {
+        vscode.window.showErrorMessage(`Unsupported file type: ${relativeFilePath}`);
+        return `Error: Unsupported file type: ${relativeFilePath}.\nThe file type is not supported for reading as text. Please provide a file with a supported textual format. If you have any questions or need assistance, please let me know.`;
+    }
+
+    // Check the file length and cap it if it exceeds a threshold
+    const maxContentLength = 10000; // 1 MB
+    if (fileContent.length > maxContentLength) {
+        // vscode.window.showWarningMessage(`File content exceeds the maximum length. Only the first ${maxContentLength} characters will be read.`);
+        fileContent = fileContent.slice(0, maxContentLength);
+        // TODO: generate a summayr of file
     }
 
     try {
@@ -95,7 +126,7 @@ export function readFileContent(relativeFilePath: string) {
         return fileContent;
     } catch (error) {
         vscode.window.showErrorMessage(`Error reading file: ${relativeFilePath}`);
-        return null;
+        return `Error: File not read: ${relativeFilePath}.\nError reading file content. Reminder user to check the file path and try again. If you have an idea why this file is not read, please let me know. Keep it short and concise. Thanks!`;
     }
 }
 

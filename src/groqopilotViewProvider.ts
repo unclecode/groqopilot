@@ -12,6 +12,10 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
     private _controller: GroqopilotController;
     private _view: vscode.WebviewView | undefined;
     private audioRecorder: AudioRecorder;
+    private busyForCompletion: boolean;
+    private readyForCompletion: boolean;
+    private lastContent: string;
+
 
     constructor(extensionUri: vscode.Uri, private readonly _context: vscode.ExtensionContext) {
         // _context.globalState.update('groqopilotApiKey', undefined);
@@ -38,7 +42,7 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
                     vscode.window.setStatusBarMessage('');
                     this.readyForCompletion = false;
 
-                    return res.map((item) => {
+                    return res.map((item : string) => {
                         const lines = item.split('\n')
                         const lastLine = lines[lines.length - 1];
                         const endLine = position.line + lines.length - 1;
@@ -214,7 +218,7 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
 
     }
 
-    async public generateCompletions(document, position) {
+    public async  generateCompletions(document : vscode.TextDocument, position : vscode.Position) {
         this.busyForCompletion = true;
         const editor = vscode.window.activeTextEditor;
         if (editor) {
@@ -250,7 +254,7 @@ class GroqopilotViewProvider implements vscode.WebviewViewProvider {
 
     }
 
-    async public autoComplete() {
+    public async  autoComplete() {
         const editor = vscode.window.activeTextEditor;
         if (editor) {
             const document = editor.document;

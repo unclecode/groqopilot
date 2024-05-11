@@ -70,6 +70,7 @@ body {
     /* width: 100%; */
     transition: background-color 0.3s;
     flex-direction: column;
+    gap: 0.5rem;
 }
 
 .avatar {

@@ -11,7 +11,9 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(
         vscode.commands.registerCommand('groqopilot.autoComplete', () => {
-            provider.autoComplete();
+            // alert user this will be released soon
+            vscode.window.showInformationMessage('This feature will be released soon, I know you are excited, so am I. Stay tuned');
+            //TODO: provider.autoComplete();
 
         })
     );

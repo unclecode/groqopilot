@@ -24,6 +24,7 @@ export class GroqopilotController {
         this._loadSessions();
         this._settings = this._context.globalState.get<Record<string, any>>('groqopilotSettings') || {};
         this.setSettings(this._settings);
+        this.resources = {}
 
         // Check if the "update_data_for_created" doesnt exist in the global state, then update the data for the created
         if (!this._context.globalState.get("updated_data_for_created")) {
@@ -34,6 +35,19 @@ export class GroqopilotController {
             }
             this._context.globalState.update("updated_data_for_created", true);
             this._saveSessions();
+        }
+
+        // Check if the workspace folder is available and there is no .groq folder, make one
+        if (false && vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+            // https://js.langchain.com/docs/expression_language/cookbook/retrieval
+            // https://docs.trychroma.com/getting-started?lang=js
+            const folderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+            const fs = require('fs');
+            const path = require('path');
+            const dir = path.join(folderPath, '.groq');
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir);
+            }
         }
     }
 
@@ -240,9 +254,10 @@ export class GroqopilotController {
         // Get all current messages of session.
         let currentMessages = this._sessions[this._activeSessionId].messages;
 
-
         // check if in setting "rerank" is set to true, then call the reRank function if not call the callAPI function
         let result = null;
+        // if there has been 
+
         if (this._settings.rerank.value)
             result = await this.reRank(message_context, currentMessages, 5, 3);
         else
@@ -324,6 +339,7 @@ export class GroqopilotController {
 
     async public getCompletions(language, content, position) {
         try {
+            // https://github.com/deepseek-ai/DeepSeek-Coder?tab=readme-ov-file
             if (this._settings.autocomplete_model.selected.startsWith("ollama")) {
                 content = content.slice(0, position) + "<｜fim▁hole｜>" + content.slice(position);
                 const completions = await deepseekCodeCompletion(content, this._settings.autocomplete_model.selected.split("/")[1]);
