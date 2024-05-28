@@ -4,6 +4,16 @@
 
 Groqopilot is a Visual Studio Code extension that integrates Llama3, and Groq, a high-speed inference engine, into your coding environment. Driven by the desire to use Groq everywhere, I built this for myself, hoping it can help others too.
 
+## Groqopilot v0.83: Contextual File & URL Attachments! 🚀
+
+Excited to announce two new features in Groqopilot for VS Code!
+
+1️⃣ Mention any file from your workspace with `@src/app.js` to fetch its content into your chat context.ß
+
+2️⃣ Link an URL with `@https://docs.phidata.com/introduction` to include its content in your conversation.
+
+👉 Check this post for more details: [Groqopilot v0.83: Contextual File & URL Attachments! 🚀](https://x.com/unclecode/status/1795467593471652276?s=46&t=J1hebTqzIYxu8ZpV-7GoyQ)
+
 ## Features
 
 - **Chat Interface**: Like Copilot, but with only some essential features.
