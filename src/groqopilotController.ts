@@ -78,8 +78,8 @@ export class GroqopilotController {
         };
         this._settings.model = {
             "type": "enum",
-            "value": ["llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"],
-            "selected": this._settings?.model?.selected || "llama3-8b-8192"
+            "value": ["llama-3.1-405b-reasoning", "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"],
+            "selected": this._settings?.model?.selected || "llama-3.1-70b-versatile"
         };
         // Add autocomplete model
         this._settings.autocomplete_model = {

@@ -101,6 +101,25 @@ body {
     border-radius: 5px;
 }
 
+.message .content h1 {
+    font-size: 1.5em;
+    margin: 0;
+}
+.message .content h2 {
+    font-size: 1.25em;
+    margin: 0;
+}
+
+.message .content h3 {
+    font-size: 1.1em;
+    margin: 0;
+}
+
+.message .content h4 {
+    font-size: 1em;
+    margin: 0;
+}
+
 .message .content p + p {
     margin-top: 10px;
 }

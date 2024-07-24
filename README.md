@@ -4,6 +4,10 @@
 
 Groqopilot is a Visual Studio Code extension that integrates Llama3, and Groq, a high-speed inference engine, into your coding environment. Driven by the desire to use Groq everywhere, I built this for myself, hoping it can help others too.
 
+## Groqopilot v0.84: Supporting Llama3.1 Series and 405B Model
+
+Let's have fun with the best open model on the fastest inference engine! 🚀
+
 ## Groqopilot v0.83: Contextual File & URL Attachments! 🚀
 
 Excited to announce two new features in Groqopilot for VS Code!
