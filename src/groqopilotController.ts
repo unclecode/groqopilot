@@ -78,8 +78,25 @@ export class GroqopilotController {
         };
         this._settings.model = {
             "type": "enum",
-            "value": ["llama-3.1-405b-reasoning", "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "llama3-8b-8192", "mixtral-8x7b-32768", "gemma-7b-it"],
-            "selected": this._settings?.model?.selected || "llama-3.1-70b-versatile"
+            "value": [
+                "distil-whisper-large-v3-en",
+                "gemma2-9b-it",
+                "llama-3.1-8b-instant",
+                "llama-3.3-70b-versatile",
+                "meta-llama/llama-guard-4-12b",
+                "whisper-large-v3",
+                "whisper-large-v3-turbo",
+                "deepseek-r1-distill-llama-70b",
+                "meta-llama/llama-4-maverick-17b-128e-instruct",
+                "meta-llama/llama-4-scout-17b-16e-instruct",
+                "meta-llama/llama-prompt-guard-2-22m",
+                "meta-llama/llama-prompt-guard-2-86m",
+                "mistral-saba-24b",
+                "playai-tts",
+                "playai-tts-arabic",
+                "qwen/qwen3-32b"
+            ],
+            "selected": this._settings?.model?.selected || "llama-3.3-70b-versatile"
         };
         // Add autocomplete model
         this._settings.autocomplete_model = {
@@ -390,7 +407,7 @@ export class GroqopilotController {
                 ],
                 temperature: this._settings.temperature.value,
                 top_p: 0.9,
-                model: (model !== "") || this._settings.model.selected,
+                model: model || this._settings.model.selected,
             });
 
             return { status: 'success', data: completion.choices[0].message.content };
@@ -465,7 +482,7 @@ final_response_for_user
 >>>`;
 
             // Call the callAPI function with the generated prompt
-            const finalResult = await this.callAPI(prompt, [], "llama2-70b-4096"); //"mixtral-8x7b-32768");
+            const finalResult = await this.callAPI(prompt, [], "llama-3.3-70b-versatile");
 
             // Extract the final response from the finalResult
             const finalResponse = finalResult.data.match(/>>>([\s\S]*?)>>>/)[1].trim();
